@@ -66,18 +66,19 @@ public class AabPublisher implements Publisher {
         // load release notes
         System.out.println("Loading release notes...");
         List<LocalizedText> releaseNotes = new ArrayList<>();
+        String language = new Locale("pt", "BR").toString();
         if (arguments.getNotesPath() != null) {
             Path notesFile = FileSystems.getDefault().getPath(arguments.getNotesPath()).normalize();
             String notesContent = null;
             try {
                 notesContent = new String(Files.readAllBytes(notesFile));
-                releaseNotes.add(new LocalizedText().setLanguage(Locale.US.toString()).setText(notesContent));
+                releaseNotes.add(new LocalizedText().setLanguage(language).setText(notesContent));
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
         } else if (arguments.getNotes() != null) {
-            releaseNotes.add(new LocalizedText().setLanguage(Locale.US.toString()).setText(arguments.getNotes()));
+            releaseNotes.add(new LocalizedText().setLanguage(language).setText(arguments.getNotes()));
         }
 
         // init publisher
