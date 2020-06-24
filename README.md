@@ -49,7 +49,7 @@ Execute the binary, passing required data in arguments.
     ```
 * AAB File
     ```bash
-     java -jar release-manager-1.2.jar -key "key.json" -file "app.aab" -track "internal" -name "myApp" -notes "new release" -name appName -packageName app.package.name
+     java -jar release-manager-1.2.jar -key "key.json" -file "app.aab" -track "internal" -name "myApp" -versionName "1.2.3" -notes "new release" -name appName -packageName app.package.name
     ```
 
 #### CLI Options
@@ -60,8 +60,8 @@ Running without any arguments will print available argument options.
 Options:
  -file VAL          : The apk or aab file to publish
  -key VAL           : JSON key file of authorized service account
- -name VAL          : (optional) AndroidPublisher name on Play Store (defaults to
-                      name in apk)
+ -name VAL          : (optional) AndroidPublisher name on Play Store (defaults to name in apk)
+ -versionName VAL   : (optional) Version name displayed on Google Play Console (not used in apk)
  -notes VAL         : (optional) Release notes
  -notesFile VAL     : (optional) Release notes from file
  -track VAL         : Release track to use. Eg. internal, alpha, beta or production

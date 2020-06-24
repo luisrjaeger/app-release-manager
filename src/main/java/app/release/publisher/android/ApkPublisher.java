@@ -85,7 +85,7 @@ public class ApkPublisher implements Publisher {
 
             // create a release on track
             System.out.println(String.format("On track:%s. Creating a release...", arguments.getTrackName()));
-            TrackRelease release = new TrackRelease().setName("Automated publish").setStatus("completed")
+            TrackRelease release = new TrackRelease().setName(apkMeta.getVersionName()).setStatus("completed")
                     .setVersionCodes(Collections.singletonList((long) apk.getVersionCode()))
                     .setReleaseNotes(releaseNotes);
             Track track = new Track().setReleases(Collections.singletonList(release)).setTrack(arguments.getTrackName());

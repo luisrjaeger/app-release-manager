@@ -51,8 +51,10 @@ public class AabPublisher implements Publisher {
         Path file = FileSystems.getDefault().getPath(arguments.getFile()).normalize();
         String applicationName = arguments.getAppName();
         String packageName = arguments.getPackageName();
+        String versionName = arguments.getVersionName();
         System.out.println("Application Name: " + applicationName);
         System.out.println("Package Name: " + packageName);
+        System.out.println("Version Name: " + versionName);
 
         // load release notes
         System.out.println("Loading release notes...");
@@ -96,10 +98,17 @@ public class AabPublisher implements Publisher {
 
             // create a release on track
             System.out.println(String.format("On track:%s. Creating a release...", arguments.getTrackName()));
-            TrackRelease release = new TrackRelease().setName("Automated publish").setStatus("completed")
-                    .setVersionCodes(Collections.singletonList((long) bundle.getVersionCode()))
-                    .setReleaseNotes(releaseNotes);
-            Track track = new Track().setReleases(Collections.singletonList(release)).setTrack(arguments.getTrackName());
+
+            TrackRelease release = new TrackRelease()
+                .setName(versionName)
+                .setStatus("completed")
+                .setVersionCodes(Collections.singletonList((long) bundle.getVersionCode()))
+                .setReleaseNotes(releaseNotes);
+
+            Track track = new Track()
+                .setReleases(Collections.singletonList(release))
+                .setTrack(arguments.getTrackName());
+
             publisher.edits().tracks().update(packageName, editId, arguments.getTrackName(), track).execute();
             System.out.println(String.format("Release created on track: %s", arguments.getTrackName()));
 

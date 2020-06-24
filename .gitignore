@@ -26,3 +26,9 @@
 
 ### VS Code ###
 .vscode/
+
+### Mac ###
+.DS_Store
+
+### output ###
+out/

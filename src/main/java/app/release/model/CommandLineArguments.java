@@ -10,6 +10,9 @@ public class CommandLineArguments {
     @Option(name = "-name", usage = "(optional) Provide with AAB File")
     private String appName;
 
+    @Option(name = "-versionName", usage = "(optional) Provide with AAB File")
+    private String versionName;
+
     @Option(name = "-packageName", usage = "(optional) Provide with AAB File")
     private String packageName;
 
@@ -39,6 +42,14 @@ public class CommandLineArguments {
 
     public void setAppName(String appName) {
         this.appName = appName;
+    }
+
+    public String getVersionName() {
+        return versionName;
+    }
+
+    public void setVersionName(String appName) {
+        this.versionName = versionName;
     }
 
     public String getFile() {
