@@ -19,7 +19,7 @@ public class CommandLineArguments {
     @Option(name = "-file", required = true, usage = "APK Or AAB file to be released")
     private String file;
 
-    @Option(name = "-track", required = true, usage = "Release track to use. Eg. internal, alpha, beta or production")
+    @Option(name = "-track", required = true, usage = "Release track to use. Eg. internal, alpha, beta or production. Allow multiple tracks and user fraction. Ex. 'beta:1,production:0.05'")
     private String trackName;
 
     @Option(name = "-notes", forbids = "-notesFile", usage = "(optional) Release notes")
@@ -48,7 +48,7 @@ public class CommandLineArguments {
         return versionName;
     }
 
-    public void setVersionName(String appName) {
+    public void setVersionName(String versionName) {
         this.versionName = versionName;
     }
 

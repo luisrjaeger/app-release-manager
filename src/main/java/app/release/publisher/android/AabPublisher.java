@@ -1,13 +1,15 @@
 package app.release.publisher.android;
 
-import app.release.model.CommandLineArguments;
-import app.release.publisher.Publisher;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.AbstractInputStreamContent;
 import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.androidpublisher.AndroidPublisherScopes;
-import com.google.api.services.androidpublisher.model.*;
+import com.google.api.services.androidpublisher.model.AppEdit;
+import com.google.api.services.androidpublisher.model.Bundle;
+import com.google.api.services.androidpublisher.model.LocalizedText;
+import com.google.api.services.androidpublisher.model.Track;
+import com.google.api.services.androidpublisher.model.TrackRelease;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -19,13 +21,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+import app.release.model.CommandLineArguments;
+import app.release.publisher.Publisher;
+
 /**
  * Uploads android aab files to Play Store.
  */
 public class AabPublisher implements Publisher {
 
     private static final String MIME_TYPE_AAB = "application/octet-stream";
-    private CommandLineArguments arguments;
+    private final CommandLineArguments arguments;
 
 
     public AabPublisher(CommandLineArguments arguments) {
@@ -52,9 +57,11 @@ public class AabPublisher implements Publisher {
         String applicationName = arguments.getAppName();
         String packageName = arguments.getPackageName();
         String versionName = arguments.getVersionName();
+        String tracks = arguments.getTrackName();
         System.out.println("Application Name: " + applicationName);
         System.out.println("Package Name: " + packageName);
         System.out.println("Version Name: " + versionName);
+        System.out.println("Tracks: " + tracks);
 
         // load release notes
         System.out.println("Loading release notes...");
@@ -96,21 +103,26 @@ public class AabPublisher implements Publisher {
             Bundle bundle = publisher.edits().bundles().upload(packageName, editId, aabContent).execute();
             System.out.println(String.format("File uploaded. Version Code: %s", bundle.getVersionCode()));
 
-            // create a release on track
-            System.out.println(String.format("On track:%s. Creating a release...", arguments.getTrackName()));
+            for (String trackName : tracks.split(",")) {
+                String name = trackName;
+                String fraction = "1";
 
-            TrackRelease release = new TrackRelease()
-                .setName(versionName)
-                .setStatus("completed")
-                .setVersionCodes(Collections.singletonList((long) bundle.getVersionCode()))
-                .setReleaseNotes(releaseNotes);
+                if (trackName.contains(":")) {
+                    String[] names = trackName.split(":");
+                    name = names[0];
+                    fraction = names[0];
+                }
 
-            Track track = new Track()
-                .setReleases(Collections.singletonList(release))
-                .setTrack(arguments.getTrackName());
+                // create a release on track
+                System.out.println(String.format("On tracks: %s. Creating a release...", trackName));
 
-            publisher.edits().tracks().update(packageName, editId, arguments.getTrackName(), track).execute();
-            System.out.println(String.format("Release created on track: %s", arguments.getTrackName()));
+                Track track = new Track()
+                    .setReleases(Collections.singletonList(buildRelease(name, fraction, bundle, releaseNotes)))
+                    .setTrack(name);
+
+                publisher.edits().tracks().update(packageName, editId, name, track).execute();
+                System.out.println(String.format("Release created on track: %s", name));
+            }
 
             // commit edit
             System.out.println("Committing edit...");
@@ -133,6 +145,26 @@ public class AabPublisher implements Publisher {
 
             // forward error with message
             throw new IOException(msg, e);
+        }
+    }
+
+    private TrackRelease buildRelease(String versionName, String fraction, Bundle bundle, List<LocalizedText> releaseNotes) {
+        String status = "completed";
+        Double userFraction = fractionToDouble(fraction);
+
+        return new TrackRelease()
+            .setName(versionName)
+            .setStatus(userFraction == 1D ? "completed" : "inProgress")
+            .setVersionCodes(Collections.singletonList((long) bundle.getVersionCode()))
+            .setReleaseNotes(releaseNotes);
+    }
+
+    private Double fractionToDouble(String fraction) {
+        try {
+            double value = Double.parseDouble(fraction);
+            return value > 0D && value <= 1D ? value : 1D;
+        } catch (NullPointerException|NumberFormatException ex) {
+            return 1D;
         }
     }
 
