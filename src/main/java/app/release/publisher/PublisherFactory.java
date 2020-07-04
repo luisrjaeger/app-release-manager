@@ -10,7 +10,7 @@ public class PublisherFactory {
     }
 
     public static Publisher buildPublisher(CommandLineArguments arguments) {
-        String fileName = arguments.getFile();
+        String fileName = arguments.getFile() != null ? arguments.getFile() : ".aab";
         Publisher publisher;
         if (fileName.toLowerCase().endsWith(".apk")) {
             publisher = new ApkPublisher(arguments);

@@ -4,9 +4,11 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.AbstractInputStreamContent;
 import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.services.androidpublisher.AndroidPublisher;
 import com.google.api.services.androidpublisher.AndroidPublisherScopes;
 import com.google.api.services.androidpublisher.model.AppEdit;
 import com.google.api.services.androidpublisher.model.Bundle;
+import com.google.api.services.androidpublisher.model.BundlesListResponse;
 import com.google.api.services.androidpublisher.model.LocalizedText;
 import com.google.api.services.androidpublisher.model.Track;
 import com.google.api.services.androidpublisher.model.TrackRelease;
@@ -53,11 +55,24 @@ public class AabPublisher implements Publisher {
 
         // load aab file info
         System.out.println("Loading file information...");
-        Path file = FileSystems.getDefault().getPath(arguments.getFile()).normalize();
+
+        Path file = null;
+        Integer versionCode = 0;
+        if (arguments.getFile() != null) {
+            file = FileSystems.getDefault().getPath(arguments.getFile()).normalize();
+        } else {
+            try {
+                versionCode = Integer.valueOf(arguments.getVersionCode());
+            } catch (NumberFormatException ex) {
+                throw new NullPointerException("Neither File or Version code not defined!");
+            }
+        }
+
         String applicationName = arguments.getAppName();
         String packageName = arguments.getPackageName();
         String versionName = arguments.getVersionName();
         String tracks = arguments.getTrackName();
+
         System.out.println("Application Name: " + applicationName);
         System.out.println("Package Name: " + packageName);
         System.out.println("Version Name: " + versionName);
@@ -76,15 +91,14 @@ public class AabPublisher implements Publisher {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         } else if (arguments.getNotes() != null) {
             releaseNotes.add(new LocalizedText().setLanguage(language).setText(arguments.getNotes()));
         }
 
         // init publisher
         System.out.println("Initialising publisher service...");
-        com.google.api.services.androidpublisher.AndroidPublisher.Builder ab = new com.google.api.services.androidpublisher.AndroidPublisher.Builder(cred.getTransport(), cred.getJsonFactory(), setHttpTimeout(cred));
-        com.google.api.services.androidpublisher.AndroidPublisher publisher = ab.setApplicationName(applicationName).build();
+        AndroidPublisher.Builder ab = new AndroidPublisher.Builder(cred.getTransport(), cred.getJsonFactory(), setHttpTimeout(cred));
+        AndroidPublisher publisher = ab.setApplicationName(applicationName).build();
 
         // create an edit
         System.out.println("Initialising new edit...");
@@ -99,38 +113,50 @@ public class AabPublisher implements Publisher {
 
         try {
             // publish the file
-            System.out.println("Uploading AAB file...");
-            AbstractInputStreamContent aabContent = new FileContent(MIME_TYPE_AAB, file.toFile());
-            Bundle bundle = publisher.edits().bundles().upload(packageName, editId, aabContent).execute();
-            System.out.println(String.format("File uploaded. Version Code: %s", bundle.getVersionCode()));
+            Bundle bundle;
+            if (file != null) {
+                System.out.println("Uploading AAB file...");
+                AbstractInputStreamContent aabContent = new FileContent(MIME_TYPE_AAB, file.toFile());
+                bundle = publisher.edits().bundles().upload(packageName, editId, aabContent).execute();
+                System.out.println(String.format("File uploaded. Version Code: %s", bundle.getVersionCode()));
+            } else {
+                System.out.println("No file to upload, searching bundle...");
+                BundlesListResponse response = publisher.edits().bundles().list(packageName, editId).execute();
+
+                final Integer version = versionCode;
+                bundle = response.getBundles().stream()
+                    .filter(bun -> version.equals(bun.getVersionCode()))
+                    .findAny()
+                    .orElse(null);
+
+                if (bundle == null) throw new NullPointerException(String.format("Version code %s not found!", versionCode));
+            }
 
             for (String trackName : tracks.split(",")) {
-                String name = trackName;
+                String track = trackName;
                 String fraction = "1";
 
                 if (trackName.contains(":")) {
                     String[] names = trackName.split(":");
-                    name = names[0];
-                    fraction = names[0];
+                    track = names[0];
+                    fraction = names[1];
                 }
 
                 // create a release on track
                 System.out.println(String.format("On tracks: %s. Creating a release...", trackName));
 
-                Track track = new Track()
-                    .setReleases(Collections.singletonList(buildRelease(name, fraction, bundle, releaseNotes)))
-                    .setTrack(name);
+                Track trackEdit = new Track()
+                    .setReleases(Collections.singletonList(buildRelease(versionName, fraction, bundle, releaseNotes)))
+                    .setTrack(track);
 
-                publisher.edits().tracks().update(packageName, editId, name, track).execute();
-                System.out.println(String.format("Release created on track: %s", name));
+                publisher.edits().tracks().update(packageName, editId, track, trackEdit).execute();
+                System.out.println(String.format("Release created on track: %s", track));
             }
 
             // commit edit
             System.out.println("Committing edit...");
             publisher.edits().commit(packageName, editId).execute();
             System.out.println(String.format("Success. Committed Edit id: %s", editId));
-
-            // Success
         } catch (Exception e) {
             // error message
             String msg = "Operation Failed: " + e.getMessage();
@@ -150,12 +176,14 @@ public class AabPublisher implements Publisher {
     }
 
     private TrackRelease buildRelease(String versionName, String fraction, Bundle bundle, List<LocalizedText> releaseNotes) {
-        String status = "completed";
         Double userFraction = fractionToDouble(fraction);
+
+        System.out.println(String.format("Version: %s - %f. Tracking...\n%s", versionName, userFraction, releaseNotes));
 
         return new TrackRelease()
             .setName(versionName)
             .setStatus(userFraction == 1D ? "completed" : "inProgress")
+            .setUserFraction(userFraction)
             .setVersionCodes(Collections.singletonList((long) bundle.getVersionCode()))
             .setReleaseNotes(releaseNotes);
     }

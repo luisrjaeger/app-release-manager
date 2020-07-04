@@ -16,8 +16,11 @@ public class CommandLineArguments {
     @Option(name = "-packageName", usage = "(optional) Provide with AAB File")
     private String packageName;
 
-    @Option(name = "-file", required = true, usage = "APK Or AAB file to be released")
+    @Option(name = "-file", forbids = "-code", usage = "(optional) APK Or AAB file to be released")
     private String file;
+
+    @Option(name = "-code", forbids = "-file", usage = "(optional) Version Code to propagate")
+    private String versionCode;
 
     @Option(name = "-track", required = true, usage = "Release track to use. Eg. internal, alpha, beta or production. Allow multiple tracks and user fraction. Ex. 'beta:1,production:0.05'")
     private String trackName;
@@ -58,6 +61,14 @@ public class CommandLineArguments {
 
     public void setFile(String file) {
         this.file = file;
+    }
+
+    public String getVersionCode() {
+        return versionCode;
+    }
+
+    public void setVersionCode(String file) {
+        this.versionCode = versionCode;
     }
 
     public String getTrackName() {
