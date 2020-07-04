@@ -9,9 +9,9 @@ Suitable for automation of play store uploads in a CI system.
 
 ## Install
 
-1. Download the latest jar file from [Releases Section](https://github.com/rakeshgirase/app-release-manager/releases).
+1. Download the latest jar file from [Releases Section](https://github.com/luisrjaeger/app-release-manager/releases).
 2. Place it in root folder of your application. You can check in the file for Cloud build.
-3. Use command java -jar release-manager-1.2.jar -key "key.json" -file "app.apk" -track "internal" -name "myApp" -notes "new release". (You can use this command in your cloud build config file)
+3. Use command java -jar release-manager-1.3.jar -key "key.json" -file "app.apk" -track "internal:1,beta:1,production:0.05" -name "myApp" -notes "new release". (You can use this command in your cloud build config file)
 
 
 ## Usage
@@ -45,11 +45,11 @@ Build signed production android apk or aab file to upload. In case of a CI serve
 Execute the binary, passing required data in arguments.
 * APK File
     ```bash
-     java -jar release-manager-1.2.jar -key "key.json" -file "app.apk" -track "internal" -name "myApp" -notes "new release"
+     java -jar release-manager-1.3.jar -key "key.json" -file "app.apk" -track "internal" -name "myApp" -notes "new release"
     ```
 * AAB File
     ```bash
-     java -jar release-manager-1.2.jar -key "key.json" -file "app.aab" -track "internal" -name "myApp" -versionName "1.2.3" -notes "new release" -name appName -packageName app.package.name
+     java -jar release-manager-1.3.jar -key "key.json" -file "app.aab" -track "internal" -name "myApp" -versionName "1.2.3" -notes "new release" -name appName -packageName app.package.name
     ```
 
 #### CLI Options
@@ -58,13 +58,14 @@ Running without any arguments will print available argument options.
 
 ```bash
 Options:
- -file VAL          : The apk or aab file to publish
+ -file VAL          : (Optional for bundle if you are propaganting version) The apk or aab file to publish
+ -code VAL          : (optional if no file informed) Version code from bundle to propagate or update
  -key VAL           : JSON key file of authorized service account
  -name VAL          : (optional) AndroidPublisher name on Play Store (defaults to name in apk)
  -versionName VAL   : (optional) Version name displayed on Google Play Console (not used in apk)
  -notes VAL         : (optional) Release notes
  -notesFile VAL     : (optional) Release notes from file
- -track VAL         : Release track to use. Eg. internal, alpha, beta or production
+ -track VAL         : Release track to use with user fraction. Eg. internal, alpha, beta or production. Ex.: "internal:1,beta:0.5,production:0.05", "internal,beta,production" or just "beta", "alpha", etc for single full user base releases
  -packageName VAL   : (optional for apk) App Package Name
  ```
 
@@ -75,5 +76,3 @@ To build:
 ```bash
 mvn clean install
 ```
-
-Pull requests and suggestions are welcome.
