@@ -16,7 +16,7 @@ public class CommandLineArguments {
     @Option(name = "-packageName", usage = "(optional) Provide with AAB File")
     private String packageName;
 
-    @Option(name = "-file", forbids = "-code", usage = "(optional) APK Or AAB file to be released")
+    @Option(name = "-file", forbids = "-code", usage = "(optional) AAB file to be released")
     private String file;
 
     @Option(name = "-code", forbids = "-file", usage = "(optional) Version Code to propagate")
@@ -97,5 +97,9 @@ public class CommandLineArguments {
 
     public String getPackageName() {
         return packageName;
+    }
+
+    public void setPackageName(String packageName) {
+        this.packageName = packageName;
     }
 }
