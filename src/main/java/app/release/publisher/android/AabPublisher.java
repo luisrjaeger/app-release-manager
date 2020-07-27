@@ -179,13 +179,14 @@ public class AabPublisher implements Publisher {
         Double userFraction = fractionToDouble(fraction);
 
         System.out.println(String.format("Version: %s - %f. Tracking...\n%s", versionName, userFraction, releaseNotes));
-
-        return new TrackRelease()
+        String status = userFraction == 1D ? "completed" : "inProgress";
+        TrackRelease trackRelease = new TrackRelease()
             .setName(versionName)
-            .setStatus(userFraction == 1D ? "completed" : "inProgress")
-            .setUserFraction(userFraction)
+            .setStatus(status)
             .setVersionCodes(Collections.singletonList((long) bundle.getVersionCode()))
             .setReleaseNotes(releaseNotes);
+
+        return status.equals("completed") ? trackRelease : trackRelease.setUserFraction(userFraction);
     }
 
     private Double fractionToDouble(String fraction) {
